@@ -140,8 +140,8 @@ $(KATI_obsolete_var \
   LOCAL_AUX_OS_VARIANT \
   LOCAL_AUX_SUBARCH \
   LOCAL_AUX_TOOLCHAIN \
-  LOCAL_CUSTOM_BUILD_STEP_INPUT \
-  LOCAL_CUSTOM_BUILD_STEP_OUTPUT \
+  LOCAL_CYGNUS_BUILD_STEP_INPUT \
+  LOCAL_CYGNUS_BUILD_STEP_OUTPUT \
   LOCAL_IS_AUX_MODULE \
   ,AUX support has been removed)
 $(KATI_obsolete_var HOST_OUT_TEST_CONFIG TARGET_OUT_TEST_CONFIG LOCAL_TEST_CONFIG_OPTIONS)
@@ -318,6 +318,10 @@ include $(BUILD_SYSTEM)/envsetup.mk
 # Pruned directory options used when using findleaves.py
 # See envsetup.mk for a description of SCAN_EXCLUDE_DIRS
 FIND_LEAVES_EXCLUDES := $(addprefix --prune=, $(SCAN_EXCLUDE_DIRS) .repo .git)
+
+ifneq ($(CYGNUS_BUILD),)
+include vendor/cygnus/config/BoardConfig.mk
+endif
 
 # The build system exposes several variables for where to find the kernel
 # headers:
@@ -1161,6 +1165,14 @@ dont_bother_goals := out \
 # consistency with those defined in BoardConfig.mk files.
 include $(BUILD_SYSTEM)/android_soong_config_vars.mk
 
+ifneq ($(CYGNUS_BUILD),)
+ifneq ($(wildcard device/custom/sepolicy/common/sepolicy.mk),)
+## We need to be sure the global selinux policies are included
+## last, to avoid accidental resetting by device configs
+$(eval include device/custom/sepolicy/common/sepolicy.mk)
+endif
+endif
+
 ifeq ($(CALLED_FROM_SETUP),true)
 include $(BUILD_SYSTEM)/ninja_config.mk
 include $(BUILD_SYSTEM)/soong_config.mk
@@ -1170,6 +1182,9 @@ endif
 -include external/ltp/android/ltp_package_list.mk
 DEFAULT_DATA_OUT_MODULES := ltp $(ltp_packages) $(kselftest_modules)
 .KATI_READONLY := DEFAULT_DATA_OUT_MODULES
+
+# Include any vendor specific config.mk file
+-include vendor/*/build/core/config.mk
 
 # Make RECORD_ALL_DEPS readonly.
 RECORD_ALL_DEPS :=$= $(filter true,$(RECORD_ALL_DEPS))

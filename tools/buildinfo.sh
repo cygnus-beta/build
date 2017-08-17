@@ -54,4 +54,6 @@ if [ -n "$BUILD_THUMBPRINT" ] ; then
   echo "ro.build.thumbprint=$BUILD_THUMBPRINT"
 fi
 
+echo "com.cygnus.device=$CYGNUS_DEVICE"
+
 echo "# end build properties"
